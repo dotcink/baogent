@@ -8,44 +8,68 @@ export interface ParsedToolCall {
   input: Record<string, unknown>
 }
 
+export interface ResolvedToolCall {
+  id: string
+  name: string
+  input?: Record<string, unknown>
+  error?: string
+}
+
 export interface ToolResult {
   toolCallId: string
   content: string
 }
 
-export function parseToolCalls(toolCalls: ToolCall[]): ParsedToolCall[] {
-  return toolCalls.flatMap((toolCall) => {
+export function parseToolCalls(toolCalls: ToolCall[]): ResolvedToolCall[] {
+  return toolCalls.map((toolCall): ResolvedToolCall => {
     if (toolCall.type !== "function") {
-      return []
+      return {
+        id: toolCall.id,
+        name: "unknown",
+        error: `Unsupported tool call type: ${toolCall.type}`,
+      }
     }
 
     try {
       const parsed = JSON.parse(toolCall.function.arguments) as unknown
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        return []
-      }
-
-      return [
-        {
+        return {
           id: toolCall.id,
           name: toolCall.function.name,
-          input: parsed as Record<string, unknown>,
-        },
-      ]
+          error: "Invalid tool arguments: expected a JSON object",
+        }
+      }
+
+      return {
+        id: toolCall.id,
+        name: toolCall.function.name,
+        input: parsed as Record<string, unknown>,
+      }
     } catch {
-      return []
+      return {
+        id: toolCall.id,
+        name: toolCall.function.name,
+        error: "Invalid tool arguments: failed to parse JSON",
+      }
     }
   })
 }
 
 export async function executeToolCalls(
-  toolCalls: ParsedToolCall[],
+  toolCalls: ResolvedToolCall[],
   executeToolCall: (toolCall: ParsedToolCall) => Promise<string> | string,
 ): Promise<ToolResult[]> {
   const results: ToolResult[] = []
 
   for (const toolCall of toolCalls) {
-    const content = await executeToolCall(toolCall)
+    const content = toolCall.error
+      ? `Error: ${toolCall.error}`
+      : await executeToolCall({
+          id: toolCall.id,
+          name: toolCall.name,
+          input: toolCall.input ?? {},
+        })
+
     results.push({
       toolCallId: toolCall.id,
       content,

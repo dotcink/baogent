@@ -77,11 +77,6 @@ export class AgentLoop {
 
     const toolCalls = parseToolCalls(response.toolCalls)
     const results = await executeToolCalls(toolCalls, this.options.executeToolCall)
-    if (results.length === 0) {
-      this.transitionReason = null
-      return response.content
-    }
-
     this.messages.push(...buildToolResultMessages(results))
     this.turnCount += 1
     this.transitionReason = "tool_result"

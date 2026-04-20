@@ -4,11 +4,11 @@
  *
  * 用法：
  *   bun run cli chat "你好"
- *   bun run cli --config ./my.json chat "你好"
+ *   bun run cli --config ./my.toml chat "你好"
  *   bun run cli chat              # 从 stdin 读取
  *   bun run cli agent-loop
  *
- * 配置优先级：env vars > --config 文件 > 当前目录默认文件（baogent.json）
+ * 配置优先级：env vars > --config 文件 > 当前目录默认文件（baogent.toml）
  *
  * 环境变量：
  *   MODEL_API_KEY     API Key
