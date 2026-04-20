@@ -1,0 +1,10 @@
+# baogent 配置示例
+# 复制此文件并填入实际值，例如：
+#   cp config/example.toml config/local.toml
+#   bun run cli -c config/local.toml chat "hello"
+
+[model]
+apiKey  = "your-api-key"
+baseURL = "https://ark.cn-beijing.volces.com/api/v3"
+model   = "doubao-seed-2-0-code-preview-260215"
+# maxTokens = 8192

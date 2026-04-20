@@ -1,0 +1,18 @@
+{
+  "name": "baogent",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "cli": "bun run src/entry/cli.ts",
+    "example:review-refine": "bun run examples/review-refine.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.89.0"
+  }
+}
