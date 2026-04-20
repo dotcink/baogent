@@ -6,6 +6,7 @@
  *   bun run cli chat "你好"
  *   bun run cli --config ./my.json chat "你好"
  *   bun run cli chat              # 从 stdin 读取
+ *   bun run cli agent-loop
  *
  * 配置优先级：env vars > --config 文件 > 当前目录默认文件（baogent.json）
  *
@@ -15,6 +16,9 @@
  *   MODEL_NAME        模型名称
  */
 
+import { createInterface } from "node:readline/promises"
+import { stdin as input, stdout as output } from "node:process"
+import { AgentLoop, bashTool, executeBashTool } from "../agent/index.ts"
 import { OpenAIClient } from "../model/index.ts"
 import { loadConfigFile, findDefaultConfig, resolveModelConfig } from "./config.ts"
 
@@ -27,6 +31,7 @@ function usage(): never {
   console.error("")
   console.error("Commands:")
   console.error("  chat <message>   Send a message to the model")
+  console.error("  agent-loop       Start an interactive agent loop with bash tool")
   console.error("")
   console.error("Options:")
   console.error("  -c, --config <path>  Path to config file (default: baogent.toml)")
@@ -73,7 +78,42 @@ if (command === "chat") {
   }
 
   const reply = await client.chat([{ role: "user", content: message }])
-  console.log(reply)
+  console.log(reply.content)
+} else if (command === "agent-loop") {
+  const loop = new AgentLoop(client, {
+    systemPrompt: [
+      `You are a coding agent at ${process.cwd()}.`,
+      "Use the provided tools to inspect and change the workspace.",
+      "Act first, then report clearly.",
+    ].join(" "),
+    tools: [bashTool],
+    executeToolCall: executeBashTool,
+  })
+
+  const rl = createInterface({ input, output })
+
+  while (true) {
+    let message = ""
+
+    try {
+      message = await rl.question("\x1b[36magent >> \x1b[0m")
+    } catch {
+      break
+    }
+
+    if (!message.trim() || ["q", "exit"].includes(message.trim().toLowerCase())) {
+      break
+    }
+
+    loop.addUserMessage(message)
+    const reply = await loop.run()
+    if (reply) {
+      console.log(reply)
+    }
+    console.log("")
+  }
+
+  rl.close()
 } else {
   console.error(`Unknown command: ${command}`)
   usage()

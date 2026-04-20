@@ -1,4 +1,4 @@
-import type { ChatMessage, LLMProvider } from "./provider.ts"
+import type { ChatMessage, ChatResponse, LLMProvider, ToolDefinition } from "./provider.ts"
 
 export interface OpenAIConfig {
   apiKey: string
@@ -19,7 +19,10 @@ export class OpenAIClient implements LLMProvider {
     this.baseURL = config.baseURL?.replace(/\/$/, "") ?? DEFAULT_BASE_URL
   }
 
-  async chat(messages: ChatMessage[], options?: { maxTokens?: number }): Promise<string> {
+  async chat(
+    messages: ChatMessage[],
+    options?: { maxTokens?: number; tools?: ToolDefinition[] },
+  ): Promise<ChatResponse> {
     const res = await fetch(`${this.baseURL}/chat/completions`, {
       method: "POST",
       headers: {
@@ -29,6 +32,18 @@ export class OpenAIClient implements LLMProvider {
       body: JSON.stringify({
         model: this.config.model,
         messages,
+        ...(options?.tools?.length
+          ? {
+              tools: options.tools.map((tool) => ({
+                type: "function",
+                function: {
+                  name: tool.name,
+                  description: tool.description,
+                  parameters: tool.inputSchema,
+                },
+              })),
+            }
+          : {}),
         max_tokens: options?.maxTokens ?? this.config.maxTokens ?? 8192,
       }),
     })
@@ -39,9 +54,26 @@ export class OpenAIClient implements LLMProvider {
     }
 
     const data = (await res.json()) as {
-      choices: Array<{ message: { content: string } }>
+      choices: Array<{
+        message: {
+          content: string | null
+          tool_calls?: Array<{
+            id: string
+            type: "function"
+            function: {
+              name: string
+              arguments: string
+            }
+          }>
+        }
+      }>
     }
 
-    return data.choices[0]?.message.content ?? ""
+    const message = data.choices[0]?.message
+
+    return {
+      content: message?.content ?? "",
+      toolCalls: message?.tool_calls ?? [],
+    }
   }
 }

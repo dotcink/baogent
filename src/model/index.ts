@@ -1,4 +1,4 @@
-export type { ChatMessage, LLMProvider } from "./provider.ts"
+export type { ChatMessage, ChatResponse, LLMProvider, ToolCall, ToolDefinition } from "./provider.ts"
 
 // OpenAI Chat Completions 格式（兼容火山引擎、Together、Ollama 等）
 export { OpenAIClient } from "./openai.ts"
