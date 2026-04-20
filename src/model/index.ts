@@ -1,8 +1,7 @@
 export type { ChatMessage, LLMProvider } from "./provider.ts"
-
-// OpenAI Chat Completions 格式（兼容火山引擎、Together、Ollama 等）
 export { OpenAIClient } from "./openai.ts"
-export type { OpenAIConfig } from "./openai.ts"
+export type { OpenAIConfig, RawChoice } from "./openai.ts"
+export type { ToolDefinition } from "./tool.ts"
 
 // 其他格式按需添加，例如：
 // export { AnthropicClient } from "./anthropic.ts"   // Anthropic Messages API
