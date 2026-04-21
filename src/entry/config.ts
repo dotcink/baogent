@@ -4,19 +4,14 @@ export interface Config {
   model: OpenAIConfig
 }
 
-const CONFIG_FILENAMES = ["baogent.toml", ".baogentrc.toml"]
+export const CONFIG_FILENAMES = ["config/.local.toml"] as const
 
 async function parseTOML(path: string): Promise<Partial<Config>> {
   const text = await Bun.file(path).text()
   return Bun.TOML.parse(text) as Partial<Config>
 }
 
-/** 从文件路径加载配置，解析失败则报错退出 */
-export async function loadConfigFile(path: string): Promise<Partial<Config>> {
-  if (!(await Bun.file(path).exists())) {
-    console.error(`Error: config file not found: ${path}`)
-    process.exit(1)
-  }
+async function readConfigFile(path: string): Promise<Partial<Config>> {
   try {
     return await parseTOML(path)
   } catch {
@@ -25,11 +20,23 @@ export async function loadConfigFile(path: string): Promise<Partial<Config>> {
   }
 }
 
+/** 从文件路径加载配置，解析失败则报错退出 */
+export async function loadConfigFile(path: string): Promise<Partial<Config>> {
+  if (!(await Bun.file(path).exists())) {
+    console.error(`Error: config file not found: ${path}`)
+    process.exit(1)
+  }
+
+  return await readConfigFile(path)
+}
+
 /** 在当前目录按默认文件名查找配置，找不到返回 {} */
 export async function findDefaultConfig(): Promise<Partial<Config>> {
   for (const name of CONFIG_FILENAMES) {
     const file = Bun.file(name)
-    if (await file.exists()) return await parseTOML(name)
+    if (await file.exists()) {
+      return await readConfigFile(name)
+    }
   }
   return {}
 }

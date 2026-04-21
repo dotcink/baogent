@@ -2,10 +2,8 @@
   "name": "baogent",
   "version": "0.1.0",
   "type": "module",
-  "main": "./src/index.ts",
   "scripts": {
     "cli": "bun run src/entry/cli.ts",
-    "example:review-refine": "bun run examples/review-refine.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

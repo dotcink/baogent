@@ -44,7 +44,7 @@ Do not use it for general explanation or implementation unless the user explicit
 - Modular design regressions
   Shared logic should not be duplicated across CLI, loop, and tool modules
 - CLI or config breakage
-  Check command behavior, env var usage, and config loading compatibility
+  Check command behavior, env var usage, config loading compatibility, and whether help text, docs, examples, and `config/example.toml` were updated when required
 - Validation gaps
   Missing type checks, unsafe assumptions, or missing handling for malformed tool arguments
 - Safety issues
@@ -52,13 +52,16 @@ Do not use it for general explanation or implementation unless the user explicit
 
 ## Repository-Specific Rules
 
-- Follow `AGENT.md`
-  Prioritize simplicity, modularity, and layered architecture
+- Follow `AGENTS.md`
+  Prioritize simplicity, direct solutions, reuse of existing abstractions, and layered architecture
+- If a change touches CLI, config, defaults, filenames, or env vars, check that code, help text, docs, and examples were updated together
+- If a change adds or modifies a config item, check that `config/example.toml` was updated too
 - Prefer reuse of existing `model` definitions when possible
 - Avoid custom ad-hoc protocols when the project already chose a standard protocol
 - Do not spend review budget on low-value style nits unless they hide a real maintenance risk
 - Still call out style or naming issues when they create inconsistency, confusion, or future maintenance cost
 - Mention missing tests or missing `typecheck` coverage when they materially affect confidence
+- Treat `bun run typecheck` as the minimum validation when a change has no narrower applicable check
 
 ## Output Format
 

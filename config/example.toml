@@ -1,7 +1,7 @@
 # baogent 配置示例
 # 复制此文件并填入实际值，例如：
-#   cp config/example.toml config/local.toml
-#   bun run cli -c config/local.toml chat "hello"
+#   cp config/example.toml config/.local.toml
+#   bun run cli chat "hello"
 
 [model]
 apiKey  = "your-api-key"

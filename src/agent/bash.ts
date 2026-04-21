@@ -48,6 +48,10 @@ export function executeBashTool(toolCall: ParsedToolCall): string {
 
   const combined = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim()
   const output = combined ? combined.slice(0, 50_000) : "(no output)"
+  if (result.status !== 0) {
+    return `Error: Command failed with exit code ${result.status}\n${output}`
+  }
+
   console.log(output.slice(0, 200))
   return output
 }

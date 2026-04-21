@@ -8,7 +8,7 @@
  *   bun run cli chat              # 从 stdin 读取
  *   bun run cli agent-loop
  *
- * 配置优先级：env vars > --config 文件 > 当前目录默认文件（baogent.toml）
+ * 配置优先级：env vars > --config 文件 > 默认文件（config/.local.toml）
  *
  * 环境变量：
  *   MODEL_API_KEY     API Key
@@ -20,13 +20,18 @@ import { createInterface } from "node:readline/promises"
 import { stdin as input, stdout as output } from "node:process"
 import { AgentLoop, bashTool, executeBashTool } from "../agent/index.ts"
 import { OpenAIClient } from "../model/index.ts"
-import { loadConfigFile, findDefaultConfig, resolveModelConfig } from "./config.ts"
+import {
+  CONFIG_FILENAMES,
+  loadConfigFile,
+  findDefaultConfig,
+  resolveModelConfig,
+} from "./config.ts"
 
 // ── 解析参数 ──────────────────────────────────────────────────────────────────
 
 const args = Bun.argv.slice(2)
 
-function usage(): never {
+function usage(exitCode = 1): never {
   console.error("Usage: baogent [--config <path>] <command> [args]")
   console.error("")
   console.error("Commands:")
@@ -34,8 +39,9 @@ function usage(): never {
   console.error("  agent-loop       Start an interactive agent loop with bash tool")
   console.error("")
   console.error("Options:")
-  console.error("  -c, --config <path>  Path to config file (default: baogent.toml)")
-  process.exit(1)
+  console.error(`  -c, --config <path>  Path to config file (default: ${CONFIG_FILENAMES.join(", ")})`)
+  console.error("  -h, --help           Show this help")
+  process.exit(exitCode)
 }
 
 // 提取 --config 选项
@@ -43,28 +49,43 @@ let configPath: string | undefined
 const cmdArgs: string[] = []
 
 for (let i = 0; i < args.length; i++) {
-  if (args[i] === "--config" || args[i] === "-c") {
-    configPath = args[++i]
-  } else {
-    cmdArgs.push(args[i]!)
+  const arg = args[i]
+
+  if (arg === "--help" || arg === "-h") {
+    usage(0)
   }
+
+  if (arg === "--config" || arg === "-c") {
+    const next = args[i + 1]
+    if (!next) {
+      console.error("Error: missing value for --config")
+      usage()
+    }
+
+    configPath = next
+    i += 1
+    continue
+  }
+
+  cmdArgs.push(arg!)
 }
 
 const [command, ...rest] = cmdArgs
 if (!command) usage()
 
-// ── 加载配置 ──────────────────────────────────────────────────────────────────
-
-const fileConfig = configPath
-  ? await loadConfigFile(configPath)
-  : await findDefaultConfig()
-
-const modelConfig = resolveModelConfig(fileConfig)
-const client = new OpenAIClient(modelConfig)
-
 // ── 命令处理 ──────────────────────────────────────────────────────────────────
 
+async function createClient(): Promise<OpenAIClient> {
+  const fileConfig = configPath
+    ? await loadConfigFile(configPath)
+    : await findDefaultConfig()
+
+  const modelConfig = resolveModelConfig(fileConfig)
+  return new OpenAIClient(modelConfig)
+}
+
 if (command === "chat") {
+  const client = await createClient()
   let message = rest.join(" ").trim()
 
   if (!message) {
@@ -80,6 +101,7 @@ if (command === "chat") {
   const reply = await client.chat([{ role: "user", content: message }])
   console.log(reply.content)
 } else if (command === "agent-loop") {
+  const client = await createClient()
   const loop = new AgentLoop(client, {
     systemPrompt: [
       `You are a coding agent at ${process.cwd()}.`,

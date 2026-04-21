@@ -15,7 +15,6 @@
 - `src/agent`：agent loop、工具调用与 bash 能力
 - `src/entry`：CLI 与配置加载入口
 - `config/`：配置样例
-- `examples/`：示例脚本
 
 ## 环境要求
 
@@ -32,7 +31,7 @@ bun install
 1. 准备配置文件：
 
 ```bash
-cp config/example.toml baogent.toml
+cp config/example.toml config/.local.toml
 ```
 
 2. 填入 `model.apiKey`，必要时补充 `baseURL` 与 `model`
@@ -47,6 +46,12 @@ bun run cli chat "你好"
 
 ```bash
 bun run cli agent-loop
+```
+
+查看帮助：
+
+```bash
+bun run cli --help
 ```
 
 ## CLI 用法
@@ -76,8 +81,7 @@ bun run cli [--config <path>] <command> [args]
 
 默认配置文件名：
 
-- `baogent.toml`
-- `.baogentrc.toml`
+- `config/.local.toml`
 
 环境变量：
 
@@ -93,12 +97,6 @@ bun run cli [--config <path>] <command> [args]
 
 ```bash
 bun run cli
-```
-
-运行示例：
-
-```bash
-bun run example:review-refine
 ```
 
 类型检查：
