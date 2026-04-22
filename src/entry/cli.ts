@@ -18,7 +18,8 @@
 
 import { createInterface } from "node:readline/promises"
 import { stdin as input, stdout as output } from "node:process"
-import { AgentLoop, bashTool, executeBashTool } from "../agent/index.ts"
+import { AgentLoop } from "../agent/index.ts"
+import { builtInTools, executeBuiltInToolCall } from "../agent/tools/index.ts"
 import { OpenAIClient } from "../model/index.ts"
 import {
   CONFIG_FILENAMES,
@@ -36,7 +37,7 @@ function usage(exitCode = 1): never {
   console.error("")
   console.error("Commands:")
   console.error("  chat <message>   Send a message to the model")
-  console.error("  agent-loop       Start an interactive agent loop with bash tool")
+  console.error("  agent-loop       Start an interactive agent loop with built-in tools")
   console.error("")
   console.error("Options:")
   console.error(`  -c, --config <path>  Path to config file (default: ${CONFIG_FILENAMES.join(", ")})`)
@@ -108,8 +109,8 @@ if (command === "chat") {
       "Use the provided tools to inspect and change the workspace.",
       "Act first, then report clearly.",
     ].join(" "),
-    tools: [bashTool],
-    executeToolCall: executeBashTool,
+    tools: builtInTools,
+    executeToolCall: executeBuiltInToolCall,
   })
 
   const rl = createInterface({ input, output })

@@ -5,7 +5,8 @@
 ## 当前能力
 
 - `chat`：向模型发送单轮消息
-- `agent-loop`：启动带 bash 工具的交互式 agent loop
+- `agent-loop`：启动带内置工具的交互式 agent loop
+- 内置工具：`bash`、`read_file`、`write_file`、`edit_file`
 - TOML 配置加载：支持显式配置文件与默认配置文件
 - 环境变量覆盖：敏感信息优先通过环境变量注入
 
@@ -63,7 +64,7 @@ bun run cli [--config <path>] <command> [args]
 命令：
 
 - `chat <message>`：向模型发送一条消息
-- `agent-loop`：启动交互式 agent loop
+- `agent-loop`：启动交互式 agent loop，提供 `bash`、`read_file`、`write_file`、`edit_file`
 
 选项：
 

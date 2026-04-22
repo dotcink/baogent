@@ -2,9 +2,10 @@ import type { ChatMessage, LLMProvider } from "../model/provider.ts"
 import {
   buildToolResultMessages,
   executeToolCalls,
+  normalizeMessages,
   parseToolCalls,
-} from "./tool.ts"
-import type { ParsedToolCall, ToolDefinition } from "./tool.ts"
+} from "./tools/index.ts"
+import type { ParsedToolCall, ToolDefinition } from "./tools/index.ts"
 
 export interface AgentLoopOptions {
   systemPrompt?: string
@@ -54,10 +55,10 @@ export class AgentLoop {
       : []
 
     const response = await this.model.chat(
-      [
+      normalizeMessages([
         ...systemMessages,
         ...this.messages,
-      ],
+      ]),
       {
         ...(this.options.maxTokens ? { maxTokens: this.options.maxTokens } : {}),
         ...(this.options.tools ? { tools: this.options.tools } : {}),
