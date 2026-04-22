@@ -44,3 +44,5 @@ export interface LLMProvider {
     options?: { maxTokens?: number; tools?: ToolDefinition[] },
   ): Promise<ChatResponse>
 }
+
+export type ModelProvider = "openai" | "anthropic" | "gemini"

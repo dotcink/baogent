@@ -4,7 +4,27 @@
 #   bun run cli chat "hello"
 
 [model]
+provider = "openai"
 apiKey  = "your-api-key"
 baseURL = "https://ark.cn-beijing.volces.com/api/v3"
 model   = "doubao-seed-2-0-code-preview-260215"
 # maxTokens = 8192
+
+# OpenAI
+# provider = "openai"
+# apiKey   = "your-api-key"
+# baseURL  = "https://api.openai.com/v1"
+# model    = "gpt-4o"
+# maxTokens = 8192
+
+# Anthropic 示例：
+# provider = "anthropic"
+# apiKey   = "your-anthropic-api-key"
+# baseURL  = "https://api.anthropic.com/v1"
+# model    = "claude-sonnet-4-20250514"
+
+# Gemini 示例：
+# provider = "gemini"
+# apiKey   = "your-gemini-api-key"
+# baseURL  = "https://generativelanguage.googleapis.com/v1beta"
+# model    = "gemini-2.5-flash"

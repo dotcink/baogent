@@ -35,7 +35,7 @@ bun install
 cp config/example.toml config/.local.toml
 ```
 
-2. 填入 `model.apiKey`，必要时补充 `baseURL` 与 `model`
+2. 填入 `model.provider`、`model.apiKey`，必要时补充 `baseURL`、`model` 与 `maxTokens`
 
 3. 运行单轮对话：
 
@@ -86,9 +86,17 @@ bun run cli [--config <path>] <command> [args]
 
 环境变量：
 
+- `MODEL_PROVIDER`：模型协议，支持 `openai`、`anthropic`、`gemini`
 - `MODEL_API_KEY`：模型 API Key
 - `MODEL_BASE_URL`：模型 API 端点
 - `MODEL_NAME`：模型名称
+- `MODEL_MAX_TOKENS`：最大输出 token 数
+
+当前支持的 provider：
+
+- `openai`：OpenAI Chat Completions 兼容协议，也可接火山引擎、Together、Ollama 等兼容端点
+- `anthropic`：Anthropic Messages API，支持 Claude 工具调用
+- `gemini`：Google Gemini `generateContent` API，支持 function calling
 
 示例配置见 [config/example.toml](/Users/dotcink/GitHub/baogent/config/example.toml)。
 
