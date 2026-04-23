@@ -164,11 +164,9 @@ if (command === "chat") {
   const loop = new AgentLoop(client, {
     systemPrompt: [
       `You are a coding agent at ${process.cwd()}.`,
-      "Use the provided tools to inspect and change the workspace.",
       "Use the todo tool for multi-step work.",
       "Keep exactly one step in_progress when a task has multiple steps.",
-      "Refresh the plan as work advances.",
-      "Act first, then report clearly.",
+      "Refresh the plan as work advances. Prefer tools over prose.",
     ].join(" "),
     tools: builtInTools,
     todoManager,
