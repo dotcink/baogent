@@ -11,6 +11,7 @@ export interface ToolDefinition {
 export interface ToolCall {
   id: string
   type: "function"
+  thoughtSignature?: string
   function: {
     name: string
     arguments: string

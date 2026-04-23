@@ -24,6 +24,8 @@ interface GeminiFunctionCallPart {
     name: string
     args: Record<string, unknown>
   }
+  // Gemini 文档里的 JSON / JS 示例都使用 `thoughtSignature`，并要求按收到的内容原样回传。
+  thoughtSignature?: string
 }
 
 interface GeminiFunctionResponsePart {
@@ -106,6 +108,11 @@ function toGeminiContents(messages: ChatMessage[]): {
           name: toolCall.function.name,
           args,
         },
+        ...(toolCall.thoughtSignature
+          ? {
+              thoughtSignature: toolCall.thoughtSignature,
+            }
+          : {}),
       })
     }
 
@@ -136,9 +143,13 @@ function fromGeminiResponse(parts: GeminiPart[]): ChatResponse {
     }
 
     if ("functionCall" in part) {
+      const thoughtSignature =
+        typeof part.thoughtSignature === "string" ? part.thoughtSignature : undefined
+
       toolCalls.push({
         id: part.functionCall.id ?? crypto.randomUUID(),
         type: "function",
+        ...(thoughtSignature ? { thoughtSignature } : {}),
         function: {
           name: part.functionCall.name,
           arguments: JSON.stringify(part.functionCall.args ?? {}),
