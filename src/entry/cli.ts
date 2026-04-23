@@ -21,7 +21,11 @@
 import { createInterface } from "node:readline/promises"
 import { stdin as input, stdout as output } from "node:process"
 import { AgentLoop } from "../agent/index.ts"
-import { builtInTools, executeBuiltInToolCall } from "../agent/tools/index.ts"
+import {
+  builtInTools,
+  createBuiltInToolExecutor,
+  TodoManager,
+} from "../agent/tools/index.ts"
 import {
   AnthropicClient,
   GeminiClient,
@@ -125,14 +129,19 @@ if (command === "chat") {
   console.log(reply.content)
 } else if (command === "agent-loop") {
   const client = await createClient()
+  const todoManager = new TodoManager()
   const loop = new AgentLoop(client, {
     systemPrompt: [
       `You are a coding agent at ${process.cwd()}.`,
       "Use the provided tools to inspect and change the workspace.",
+      "Use the todo tool for multi-step work.",
+      "Keep exactly one step in_progress when a task has multiple steps.",
+      "Refresh the plan as work advances.",
       "Act first, then report clearly.",
     ].join(" "),
     tools: builtInTools,
-    executeToolCall: executeBuiltInToolCall,
+    todoManager,
+    executeToolCall: createBuiltInToolExecutor(todoManager),
   })
 
   const rl = createInterface({ input, output })

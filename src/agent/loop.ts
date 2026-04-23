@@ -2,15 +2,17 @@ import type { ChatMessage, LLMProvider } from "../model/provider.ts"
 import {
   buildToolResultMessages,
   executeToolCalls,
+  isTodoToolCall,
   normalizeMessages,
   parseToolCalls,
 } from "./tools/index.ts"
-import type { ParsedToolCall, ToolDefinition } from "./tools/index.ts"
+import type { ParsedToolCall, TodoManager, ToolDefinition } from "./tools/index.ts"
 
 export interface AgentLoopOptions {
   systemPrompt?: string
   tools?: ToolDefinition[]
   maxTokens?: number
+  todoManager?: TodoManager
   executeToolCall: (toolCall: ParsedToolCall) => Promise<string> | string
   messages?: ChatMessage[]
 }
@@ -53,11 +55,16 @@ export class AgentLoop {
     const systemMessages = this.options.systemPrompt
       ? ([{ role: "system", content: this.options.systemPrompt }] satisfies ChatMessage[])
       : []
+    const reminder = this.options.todoManager?.reminder()
+    const reminderMessages = reminder
+      ? ([{ role: "user", content: reminder }] satisfies ChatMessage[])
+      : []
 
     const response = await this.model.chat(
       normalizeMessages([
         ...systemMessages,
         ...this.messages,
+        ...reminderMessages,
       ]),
       {
         ...(this.options.maxTokens ? { maxTokens: this.options.maxTokens } : {}),
@@ -78,6 +85,13 @@ export class AgentLoop {
 
     const toolCalls = parseToolCalls(response.toolCalls)
     const results = await executeToolCalls(toolCalls, this.options.executeToolCall)
+    if (this.options.todoManager) {
+      if (toolCalls.some(isTodoToolCall)) {
+        this.options.todoManager.resetRoundCounter()
+      } else {
+        this.options.todoManager.noteRoundWithoutUpdate()
+      }
+    }
     this.messages.push(...buildToolResultMessages(results))
     this.turnCount += 1
     this.transitionReason = "tool_result"

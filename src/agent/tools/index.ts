@@ -7,6 +7,7 @@ import {
   readFileTool,
   writeFileTool,
 } from "./file.ts"
+import { TodoManager, todoTool } from "./todo.ts"
 import type { ParsedToolCall, ToolDefinition } from "./tool.ts"
 
 export { bashTool, executeBashTool } from "./bash.ts"
@@ -18,6 +19,7 @@ export {
   readFileTool,
   writeFileTool,
 } from "./file.ts"
+export { TodoManager, todoTool } from "./todo.ts"
 export {
   buildToolResultMessages,
   executeToolCalls,
@@ -28,7 +30,7 @@ export type { ParsedToolCall, ToolCall, ToolDefinition, ToolResult } from "./too
 
 type ToolHandler = (toolCall: ParsedToolCall) => string
 
-const TOOL_HANDLERS: Record<string, ToolHandler> = {
+const STATIC_TOOL_HANDLERS: Record<string, ToolHandler> = {
   [bashTool.name]: executeBashTool,
   [readFileTool.name]: executeReadFileTool,
   [writeFileTool.name]: executeWriteFileTool,
@@ -40,10 +42,30 @@ export const builtInTools: ToolDefinition[] = [
   readFileTool,
   writeFileTool,
   editFileTool,
+  todoTool,
 ]
 
+export function createBuiltInToolExecutor(todoManager: TodoManager): (toolCall: ParsedToolCall) => string {
+  return (toolCall: ParsedToolCall): string => {
+    const handler =
+      toolCall.name === todoTool.name
+        ? (currentToolCall: ParsedToolCall) => todoManager.executeToolCall(currentToolCall)
+        : STATIC_TOOL_HANDLERS[toolCall.name]
+
+    if (!handler) {
+      return `Error: Unknown tool: ${toolCall.name}`
+    }
+
+    return handler(toolCall)
+  }
+}
+
+export function isTodoToolCall(toolCall: { name: string }): boolean {
+  return toolCall.name === todoTool.name
+}
+
 export function executeBuiltInToolCall(toolCall: ParsedToolCall): string {
-  const handler = TOOL_HANDLERS[toolCall.name]
+  const handler = STATIC_TOOL_HANDLERS[toolCall.name]
   if (!handler) {
     return `Error: Unknown tool: ${toolCall.name}`
   }
