@@ -5,6 +5,7 @@
  * 用法：
  *   bun run cli chat "你好"
  *   bun run cli --config ./my.toml chat "你好"
+ *   bun run cli --model-log ./logs/model-io.jsonl chat "你好"
  *   bun run cli chat              # 从 stdin 读取
  *   bun run cli agent-loop
  *
@@ -30,6 +31,7 @@ import {
   AnthropicClient,
   GeminiClient,
   OpenAIClient,
+  LoggingLLMProvider,
   type LLMProvider,
 } from "../model/index.ts"
 import {
@@ -44,7 +46,7 @@ import {
 const args = Bun.argv.slice(2)
 
 function usage(exitCode = 1): never {
-  console.error("Usage: baogent [--config <path>] <command> [args]")
+  console.error("Usage: baogent [--config <path>] [--model-log <path>] <command> [args]")
   console.error("")
   console.error("Commands:")
   console.error("  chat <message>   Send a message to the model")
@@ -52,6 +54,7 @@ function usage(exitCode = 1): never {
   console.error("")
   console.error("Options:")
   console.error(`  -c, --config <path>  Path to config file (default: ${CONFIG_FILENAMES.join(", ")})`)
+  console.error("  --model-log <path>  Append model input/output JSONL logs to file")
   console.error("  -h, --help           Show this help")
   console.error("")
   console.error("Env:")
@@ -63,8 +66,9 @@ function usage(exitCode = 1): never {
   process.exit(exitCode)
 }
 
-// 提取 --config 选项
+// 提取全局选项
 let configPath: string | undefined
+let modelIOLogPath: string | undefined
 const cmdArgs: string[] = []
 
 for (let i = 0; i < args.length; i++) {
@@ -86,6 +90,23 @@ for (let i = 0; i < args.length; i++) {
     continue
   }
 
+  if (arg === "--model-log") {
+    const next = args[i + 1]
+    if (!next) {
+      console.error("Error: missing value for --model-log")
+      usage()
+    }
+
+    if (!next.trim()) {
+      console.error("Error: --model-log must not be empty")
+      process.exit(1)
+    }
+
+    modelIOLogPath = next
+    i += 1
+    continue
+  }
+
   cmdArgs.push(arg!)
 }
 
@@ -100,15 +121,25 @@ async function createClient(): Promise<LLMProvider> {
     : await findDefaultConfig()
 
   const modelConfig = resolveModelConfig(fileConfig)
+  let client: LLMProvider
+
   if (modelConfig.provider === "anthropic") {
-    return new AnthropicClient(modelConfig)
+    client = new AnthropicClient(modelConfig)
+  } else if (modelConfig.provider === "gemini") {
+    client = new GeminiClient(modelConfig)
+  } else {
+    client = new OpenAIClient(modelConfig)
   }
 
-  if (modelConfig.provider === "gemini") {
-    return new GeminiClient(modelConfig)
+  if (modelIOLogPath) {
+    return new LoggingLLMProvider(client, {
+      path: modelIOLogPath,
+      provider: modelConfig.provider,
+      model: modelConfig.model,
+    })
   }
 
-  return new OpenAIClient(modelConfig)
+  return client
 }
 
 if (command === "chat") {

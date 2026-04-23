@@ -58,7 +58,7 @@ bun run cli --help
 ## CLI 用法
 
 ```bash
-bun run cli [--config <path>] <command> [args]
+bun run cli [--config <path>] [--model-log <path>] <command> [args]
 ```
 
 命令：
@@ -69,6 +69,7 @@ bun run cli [--config <path>] <command> [args]
 选项：
 
 - `-c, --config <path>`：指定配置文件路径
+- `--model-log <path>`：把每次模型调用的输入/输出核心内容以 JSONL 追加到指定文件
 
 如果 `chat` 没有传入消息，CLI 会从标准输入读取内容。
 
@@ -91,6 +92,12 @@ bun run cli [--config <path>] <command> [args]
 - `MODEL_BASE_URL`：模型 API 端点
 - `MODEL_NAME`：模型名称
 - `MODEL_MAX_TOKENS`：最大输出 token 数
+
+日志示例：
+
+```bash
+bun run cli --model-log ./logs/model-io.jsonl chat "你好"
+```
 
 当前支持的 provider：
 
