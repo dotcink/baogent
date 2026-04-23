@@ -29,8 +29,6 @@ export function executeBashTool(toolCall: ParsedToolCall): string {
     return "Error: Dangerous command blocked"
   }
 
-  console.log(`\x1b[33m$ ${command}\x1b[0m`)
-
   const result = spawnSync("bash", ["-lc", command], {
     cwd: process.cwd(),
     encoding: "utf8",
@@ -52,6 +50,5 @@ export function executeBashTool(toolCall: ParsedToolCall): string {
     return `Error: Command failed with exit code ${result.status}\n${output}`
   }
 
-  console.log(output.slice(0, 200))
   return output
 }

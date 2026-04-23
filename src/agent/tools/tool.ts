@@ -20,6 +20,11 @@ export interface ToolResult {
   content: string
 }
 
+export interface ToolExecutionHooks {
+  onToolCall?: (toolCall: ResolvedToolCall) => void
+  onToolResult?: (toolCall: ResolvedToolCall, result: ToolResult) => void
+}
+
 function mergeTextContent(left: string | null, right: string | null): string | null {
   const parts = [left, right].filter((value): value is string => Boolean(value && value.length))
   if (parts.length === 0) {
@@ -67,10 +72,13 @@ export function parseToolCalls(toolCalls: ToolCall[]): ResolvedToolCall[] {
 export async function executeToolCalls(
   toolCalls: ResolvedToolCall[],
   executeToolCall: (toolCall: ParsedToolCall) => Promise<string> | string,
+  hooks?: ToolExecutionHooks,
 ): Promise<ToolResult[]> {
   const results: ToolResult[] = []
 
   for (const toolCall of toolCalls) {
+    hooks?.onToolCall?.(toolCall)
+
     const content = toolCall.error
       ? `Error: ${toolCall.error}`
       : await executeToolCall({
@@ -79,10 +87,12 @@ export async function executeToolCalls(
           input: toolCall.input ?? {},
         })
 
-    results.push({
+    const result = {
       toolCallId: toolCall.id,
       content,
-    })
+    }
+    results.push(result)
+    hooks?.onToolResult?.(toolCall, result)
   }
 
   return results

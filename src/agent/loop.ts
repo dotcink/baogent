@@ -23,6 +23,35 @@ export interface AgentLoopState {
   transitionReason: string | null
 }
 
+const TOOL_LOG_PREVIEW_LIMIT = 200
+
+function truncateForLog(text: string, limit = TOOL_LOG_PREVIEW_LIMIT): string {
+  return text.length > limit ? `${text.slice(0, limit)}...` : text
+}
+
+function formatToolInput(input?: Record<string, unknown>): string {
+  if (!input) {
+    return ""
+  }
+
+  const serialized = JSON.stringify(input)
+  return serialized === undefined ? "" : truncateForLog(serialized)
+}
+
+function logToolCall(toolCall: { name: string; input?: Record<string, unknown>; error?: string }): void {
+  if (toolCall.error) {
+    console.log(`\x1b[33m> ${toolCall.name}: Error: ${toolCall.error}\x1b[0m`)
+    return
+  }
+
+  const inputPreview = formatToolInput(toolCall.input)
+  console.log(`\x1b[33m> ${toolCall.name}${inputPreview ? ` ${inputPreview}` : ""}\x1b[0m`)
+}
+
+function logToolResult(result: { content: string }): void {
+  console.log(truncateForLog(result.content))
+}
+
 export class AgentLoop {
   private readonly model: LLMProvider
   private readonly options: AgentLoopOptions
@@ -84,7 +113,12 @@ export class AgentLoop {
     }
 
     const toolCalls = parseToolCalls(response.toolCalls)
-    const results = await executeToolCalls(toolCalls, this.options.executeToolCall)
+    const results = await executeToolCalls(toolCalls, this.options.executeToolCall, {
+      onToolCall: logToolCall,
+      onToolResult: (_toolCall, result) => {
+        logToolResult(result)
+      },
+    })
     if (this.options.todoManager) {
       if (toolCalls.some(isTodoToolCall)) {
         this.options.todoManager.resetRoundCounter()
