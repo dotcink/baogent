@@ -7,7 +7,7 @@
  *   bun run cli --config ./my.toml chat "你好"
  *   bun run cli --model-log ./logs/model-io.jsonl chat "你好"
  *   bun run cli chat              # 从 stdin 读取
- *   bun run cli agent-loop
+ *   bun run cli agent-loop      # 交互式 agent，可使用 todo 与 task
  *
  * 配置优先级：env vars > --config 文件 > 默认文件（config/.local.toml）
  *
@@ -23,15 +23,12 @@ import { createInterface } from "node:readline/promises"
 import { stdin as input, stdout as output } from "node:process"
 import { AgentLoop } from "../agent/index.ts"
 import {
-  builtInTools,
-  createBuiltInToolExecutor,
+  createToolExecutor,
+  getToolsByNames,
+  parentToolNames,
   TodoManager,
 } from "../agent/tools/index.ts"
-import {
-  createLLMProvider,
-  LoggingLLMProvider,
-  LangfuseLLMProvider,
-} from "../model/index.ts"
+import { createLLMProvider, LoggingLLMProvider, LangfuseLLMProvider } from "../model/index.ts"
 import {
   CONFIG_FILENAMES,
   loadConfigFile,
@@ -49,7 +46,7 @@ function usage(exitCode = 1): never {
   console.error("")
   console.error("Commands:")
   console.error("  chat <message>   Send a message to the model")
-  console.error("  agent-loop       Start an interactive agent loop with built-in tools")
+  console.error("  agent-loop       Start an interactive agent loop with built-in tools and subagent delegation")
   console.error("")
   console.error("Options:")
   console.error(`  -c, --config <path>  Path to config file (default: ${CONFIG_FILENAMES.join(", ")})`)
@@ -144,6 +141,24 @@ async function createClient(opts?: { sessionId?: string; traceName?: string }) {
   return client
 }
 
+function createParentSystemPrompt(workspace: string): string {
+  return [
+    `You are a coding agent at ${workspace}.`,
+    "Use the todo tool for multi-step work.",
+    "Use the task tool to delegate exploration or bounded subtasks when helpful.",
+    "Keep exactly one step in_progress when a task has multiple steps.",
+    "Refresh the plan as work advances. Prefer tools over prose.",
+  ].join(" ")
+}
+
+function createSubagentSystemPrompt(workspace: string): string {
+  return [
+    `You are a coding subagent at ${workspace}.`,
+    "Complete the delegated task and return a concise summary of findings or changes.",
+    "Prefer tools over prose.",
+  ].join(" ")
+}
+
 if (command === "chat") {
   const client = await createClient({ traceName: "chat" })
   let message = rest.join(" ").trim()
@@ -166,15 +181,18 @@ if (command === "chat") {
   const client = await createClient({ traceName: "agent-loop", sessionId })
   const todoManager = new TodoManager()
   const loop = new AgentLoop(client, {
-    systemPrompt: [
-      `You are a coding agent at ${process.cwd()}.`,
-      "Use the todo tool for multi-step work.",
-      "Keep exactly one step in_progress when a task has multiple steps.",
-      "Refresh the plan as work advances. Prefer tools over prose.",
-    ].join(" "),
-    tools: builtInTools,
+    systemPrompt: createParentSystemPrompt(process.cwd()),
+    generationName: "lead-agent",
+    tools: getToolsByNames(parentToolNames),
     todoManager,
-    executeToolCall: createBuiltInToolExecutor(todoManager),
+    executeToolCall: createToolExecutor(parentToolNames, {
+      todoManager,
+      subagent: {
+        model: client,
+        defaultSystemPrompt: createSubagentSystemPrompt(process.cwd()),
+        generationName: "subagent",
+      },
+    }),
   })
 
   const rl = createInterface({ input, output })

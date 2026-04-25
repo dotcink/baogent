@@ -6,7 +6,8 @@
 
 - `chat`：向模型发送单轮消息
 - `agent-loop`：启动带内置工具的交互式 agent loop
-- 内置工具：`bash`、`read_file`、`write_file`、`edit_file`
+- 内置工具：`bash`、`read_file`、`write_file`、`edit_file`、`todo`
+- 父 agent 支持 `task` 工具：可启动共享工作区、但不共享对话历史的 subagent
 - TOML 配置加载：支持显式配置文件与默认配置文件
 - 环境变量覆盖：敏感信息优先通过环境变量注入
 
@@ -64,7 +65,7 @@ bun run cli [--config <path>] [--model-log <path>] <command> [args]
 命令：
 
 - `chat <message>`：向模型发送一条消息
-- `agent-loop`：启动交互式 agent loop，提供 `bash`、`read_file`、`write_file`、`edit_file`
+- `agent-loop`：启动交互式 agent loop，提供 `bash`、`read_file`、`write_file`、`edit_file`、`todo`，以及仅父 agent 可用的 `task`
 
 选项：
 
@@ -103,6 +104,8 @@ bun run cli --model-log ./logs/model-io.jsonl chat "你好"
 - `openai`：OpenAI Chat Completions 兼容协议，也可接火山引擎、Together、Ollama 等兼容端点
 - `anthropic`：Anthropic Messages API，支持 Claude 工具调用
 - `gemini`：Google Gemini `generateContent` API，支持 function calling
+
+`agent-loop` 中的 `task` 工具会为子任务启动一个新的 agent loop。subagent 共享同一个工作区与模型客户端，但不会继承父对话历史，也不能继续递归调用 `task`。
 
 示例配置见 [config/example.toml](/Users/dotcink/GitHub/baogent/config/example.toml)。
 Langfuse 文件配置示例见 [config/langfuse.example.toml](/Users/dotcink/GitHub/baogent/config/langfuse.example.toml)。

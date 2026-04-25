@@ -47,7 +47,7 @@ export class LangfuseLLMProvider implements LLMProvider {
   ): Promise<ChatResponse> {
     const startTime = new Date()
     const generation = this.trace.generation({
-      name: "llm-generation",
+      name: options?.generationName ?? "llm-generation",
       model: this.model,
       input: messages,
       startTime,

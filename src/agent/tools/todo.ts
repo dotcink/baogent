@@ -164,3 +164,7 @@ export class TodoManager {
     return lines.join("\n")
   }
 }
+
+export function isTodoToolCall(toolCall: { name: string }): boolean {
+  return toolCall.name === todoTool.name
+}

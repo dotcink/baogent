@@ -42,6 +42,7 @@ export interface ChatResponse {
 export interface ChatOptions {
   maxTokens?: number
   tools?: ToolDefinition[]
+  generationName?: string
 }
 
 export interface LLMProvider {

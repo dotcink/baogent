@@ -1,17 +1,18 @@
 import type { ChatMessage, LLMProvider } from "../model/provider.ts"
+import { TodoManager, isTodoToolCall } from "./tools/todo.ts"
 import {
   buildToolResultMessages,
   executeToolCalls,
-  isTodoToolCall,
   normalizeMessages,
   parseToolCalls,
-} from "./tools/index.ts"
-import type { ParsedToolCall, TodoManager, ToolDefinition } from "./tools/index.ts"
+} from "./tools/tool.ts"
+import type { ParsedToolCall, ToolDefinition } from "./tools/tool.ts"
 
 export interface AgentLoopOptions {
   systemPrompt?: string
   tools?: ToolDefinition[]
   maxTokens?: number
+  generationName?: string
   todoManager?: TodoManager
   executeToolCall: (toolCall: ParsedToolCall) => Promise<string> | string
   messages?: ChatMessage[]
@@ -97,6 +98,7 @@ export class AgentLoop {
       ]),
       {
         ...(this.options.maxTokens ? { maxTokens: this.options.maxTokens } : {}),
+        ...(this.options.generationName ? { generationName: this.options.generationName } : {}),
         ...(this.options.tools ? { tools: this.options.tools } : {}),
       },
     )
