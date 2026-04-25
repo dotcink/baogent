@@ -8,7 +8,7 @@ provider = "openai"
 apiKey  = "your-api-key"
 baseURL = "https://ark.cn-beijing.volces.com/api/v3"
 model   = "doubao-seed-2-0-code-preview-260215"
-# maxTokens = 8192
+maxTokens = 8192
 
 # OpenAI
 # provider = "openai"
@@ -22,9 +22,22 @@ model   = "doubao-seed-2-0-code-preview-260215"
 # apiKey   = "your-anthropic-api-key"
 # baseURL  = "https://api.anthropic.com/v1"
 # model    = "claude-sonnet-4-20250514"
+# 本地 litellm 代理或 OpenRouter：
+# baseURL  = "http://localhost:4000/v1"
+# model    = "anthropic/claude-3-haiku"
 
 # Gemini 示例：
 # provider = "gemini"
 # apiKey   = "your-gemini-api-key"
-# baseURL  = "https://generativelanguage.googleapis.com/v1beta"
-# model    = "gemini-2.5-flash"
+# baseURL  = "https://generativelanguage.googleapis.com/v1beta/"
+# model   = "gemini/gemini-3.1-flash-lite-preview"
+# maxTokens = 8192
+# 本地 litellm 代理：
+# baseURL = "http://localhost:4000/v1beta/"
+# model   = "gemini/gemini-3.1-flash-lite-preview"
+
+# Ollama 示例：
+# provider = "openai"
+# apiKey   = "empty"
+# baseURL  = "http://localhost:11434/v1"
+# model    = "qwen2.5:7b"
