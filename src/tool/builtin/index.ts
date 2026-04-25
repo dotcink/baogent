@@ -10,6 +10,7 @@ import {
 } from "./file.ts"
 import { createTaskToolHandler, taskTool } from "./task.ts"
 import { TodoManager, isTodoToolCall, todoTool } from "./todo.ts"
+import { SkillRegistry, loadSkillTool, createExecuteLoadSkillTool } from "./skill.ts"
 import type { ParsedToolCall, ToolDefinition } from "../tool.ts"
 
 export { bashTool, executeBashTool } from "./bash.ts"
@@ -24,6 +25,8 @@ export {
 export { createTaskToolHandler, parseTaskToolInput, taskTool } from "./task.ts"
 export type { TaskToolHandlerOptions, TaskToolInput } from "./task.ts"
 export { TodoManager, isTodoToolCall, todoTool } from "./todo.ts"
+export { SkillRegistry, loadSkillTool, createExecuteLoadSkillTool } from "./skill.ts"
+export type { SkillDocument, SkillManifest } from "./skill.ts"
 export {
   buildToolResultMessages,
   executeToolCalls,
@@ -36,6 +39,7 @@ export type ToolHandler = (toolCall: ParsedToolCall) => Promise<string> | string
 
 interface ToolExecutorOptions {
   todoManager: TodoManager
+  skillRegistry?: SkillRegistry
   subagent?: {
     model: LLMProvider
     defaultSystemPrompt: string
@@ -71,6 +75,11 @@ export const TOOL_REGISTRY: Record<string, RegisteredTool> = {
     definition: todoTool,
     createHandler: (options) => (toolCall) => options.todoManager.executeToolCall(toolCall),
   },
+  [loadSkillTool.name]: {
+    definition: loadSkillTool,
+    createHandler: (options) =>
+      options.skillRegistry ? createExecuteLoadSkillTool(options.skillRegistry) : null,
+  },
   [taskTool.name]: {
     definition: taskTool,
     createHandler: (options) =>
@@ -96,6 +105,7 @@ export const builtInToolNames = [
   writeFileTool.name,
   editFileTool.name,
   todoTool.name,
+  loadSkillTool.name,
 ] as const
 
 export const parentToolNames = [...builtInToolNames, taskTool.name] as const

@@ -27,6 +27,7 @@ import {
   getToolsByNames,
   parentToolNames,
   TodoManager,
+  SkillRegistry,
 } from "../tool/builtin/index.ts"
 import { createLLMProvider, LoggingLLMProvider, LangfuseLLMProvider } from "../model/index.ts"
 import {
@@ -141,22 +142,26 @@ async function createClient(opts?: { sessionId?: string; traceName?: string }) {
   return client
 }
 
-function createParentSystemPrompt(workspace: string): string {
+function createParentSystemPrompt(workspace: string, skillRegistry: SkillRegistry): string {
   return [
     `You are a coding agent at ${workspace}.`,
     "Use the todo tool for multi-step work.",
     "Use the task tool to delegate exploration or bounded subtasks when helpful.",
+    "Use load_skill when a task needs specialized instructions before you act.",
+    `Skills available:\n${skillRegistry.describeAvailable()}`,
     "Keep exactly one step in_progress when a task has multiple steps.",
     "Refresh the plan as work advances. Prefer tools over prose.",
-  ].join(" ")
+  ].join("\n")
 }
 
-function createSubagentSystemPrompt(workspace: string): string {
+function createSubagentSystemPrompt(workspace: string, skillRegistry: SkillRegistry): string {
   return [
     `You are a coding subagent at ${workspace}.`,
     "Complete the delegated task and return a concise summary of findings or changes.",
+    "Use load_skill when a task needs specialized instructions before you act.",
+    `Skills available:\n${skillRegistry.describeAvailable()}`,
     "Prefer tools over prose.",
-  ].join(" ")
+  ].join("\n")
 }
 
 if (command === "chat") {
@@ -180,16 +185,18 @@ if (command === "chat") {
   const sessionId = crypto.randomUUID()
   const client = await createClient({ traceName: "agent-loop", sessionId })
   const todoManager = new TodoManager()
+  const skillRegistry = new SkillRegistry(".agents/skills")
   const loop = new AgentLoop(client, {
-    systemPrompt: createParentSystemPrompt(process.cwd()),
+    systemPrompt: createParentSystemPrompt(process.cwd(), skillRegistry),
     generationName: "lead-agent",
     tools: getToolsByNames(parentToolNames),
     todoManager,
     executeToolCall: createToolExecutor(parentToolNames, {
       todoManager,
+      skillRegistry,
       subagent: {
         model: client,
-        defaultSystemPrompt: createSubagentSystemPrompt(process.cwd()),
+        defaultSystemPrompt: createSubagentSystemPrompt(process.cwd(), skillRegistry),
         generationName: "subagent",
       },
     }),
