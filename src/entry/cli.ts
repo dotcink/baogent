@@ -28,12 +28,9 @@ import {
   TodoManager,
 } from "../agent/tools/index.ts"
 import {
-  AnthropicClient,
-  GeminiClient,
-  OpenAIClient,
+  createLLMProvider,
   LoggingLLMProvider,
   LangfuseLLMProvider,
-  type LLMProvider,
 } from "../model/index.ts"
 import {
   CONFIG_FILENAMES,
@@ -124,12 +121,7 @@ async function createClient(opts?: { sessionId?: string; traceName?: string }) {
 
   const modelConfig = resolveModelConfig(fileConfig)
 
-  let client: LLMProvider =
-    modelConfig.provider === "anthropic"
-      ? new AnthropicClient(modelConfig)
-      : modelConfig.provider === "gemini"
-        ? new GeminiClient(modelConfig)
-        : new OpenAIClient(modelConfig)
+  let client = createLLMProvider(modelConfig)
 
   if (modelIOLogPath) {
     client = new LoggingLLMProvider(client, {
@@ -152,12 +144,6 @@ async function createClient(opts?: { sessionId?: string; traceName?: string }) {
   return client
 }
 
-async function flushClient(client: LLMProvider): Promise<void> {
-  if (client instanceof LangfuseLLMProvider) {
-    await client.flush()
-  }
-}
-
 if (command === "chat") {
   const client = await createClient({ traceName: "chat" })
   let message = rest.join(" ").trim()
@@ -174,7 +160,7 @@ if (command === "chat") {
 
   const reply = await client.chat([{ role: "user", content: message }])
   console.log(reply.content)
-  await flushClient(client)
+  await client.flush?.()
 } else if (command === "agent-loop") {
   const sessionId = crypto.randomUUID()
   const client = await createClient({ traceName: "agent-loop", sessionId })
@@ -215,7 +201,7 @@ if (command === "chat") {
   }
 
   rl.close()
-  await flushClient(client)
+  await client.flush?.()
 } else {
   console.error(`Unknown command: ${command}`)
   usage()

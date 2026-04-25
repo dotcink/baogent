@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatResponse, LLMProvider, ToolDefinition } from "./provider.ts"
+import type { ChatMessage, ChatOptions, ChatResponse, LLMProvider } from "./provider.ts"
 
 export interface OpenAIConfig {
   apiKey: string
@@ -21,7 +21,7 @@ export class OpenAIClient implements LLMProvider {
 
   async chat(
     messages: ChatMessage[],
-    options?: { maxTokens?: number; tools?: ToolDefinition[] },
+    options?: ChatOptions,
   ): Promise<ChatResponse> {
     const res = await fetch(`${this.baseURL}/chat/completions`, {
       method: "POST",

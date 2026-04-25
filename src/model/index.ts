@@ -1,4 +1,5 @@
 export type {
+  ChatOptions,
   ChatMessage,
   ChatResponse,
   LLMProvider,
@@ -20,3 +21,26 @@ export { LoggingLLMProvider } from "./logging.ts"
 export type { LoggingLLMProviderOptions } from "./logging.ts"
 export { LangfuseLLMProvider } from "./langfuse.ts"
 export type { LangfuseLLMProviderOptions } from "./langfuse.ts"
+export { parseJSONObject, joinTextParts, splitSystemMessages } from "./utils/index.ts"
+export type { SplitMessagesResult } from "./utils/index.ts"
+
+import { AnthropicClient, type AnthropicConfig } from "./anthropic.ts"
+import { GeminiClient, type GeminiConfig } from "./gemini.ts"
+import { OpenAIClient, type OpenAIConfig } from "./openai.ts"
+import type { LLMProvider } from "./provider.ts"
+
+export type ProviderClientConfig =
+  | ({ provider: "openai" } & OpenAIConfig)
+  | ({ provider: "anthropic" } & AnthropicConfig)
+  | ({ provider: "gemini" } & GeminiConfig)
+
+export function createLLMProvider(config: ProviderClientConfig): LLMProvider {
+  switch (config.provider) {
+    case "anthropic":
+      return new AnthropicClient(config)
+    case "gemini":
+      return new GeminiClient(config)
+    case "openai":
+      return new OpenAIClient(config)
+  }
+}

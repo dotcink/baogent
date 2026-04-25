@@ -1,4 +1,4 @@
-import type { ChatMessage } from "./provider.ts"
+import type { ChatMessage } from "../provider.ts"
 
 export interface SplitMessagesResult {
   systemPrompt?: string

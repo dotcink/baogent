@@ -1,10 +1,10 @@
 import { Langfuse } from "langfuse"
 import type { LangfuseTraceClient } from "langfuse-core"
 import type {
+  ChatOptions,
   ChatMessage,
   ChatResponse,
   LLMProvider,
-  ToolDefinition,
 } from "./provider.ts"
 
 export interface LangfuseLLMProviderOptions {
@@ -43,7 +43,7 @@ export class LangfuseLLMProvider implements LLMProvider {
 
   async chat(
     messages: ChatMessage[],
-    options?: { maxTokens?: number; tools?: ToolDefinition[] },
+    options?: ChatOptions,
   ): Promise<ChatResponse> {
     const startTime = new Date()
     const generation = this.trace.generation({
@@ -72,6 +72,7 @@ export class LangfuseLLMProvider implements LLMProvider {
   }
 
   async flush(): Promise<void> {
+    await this.inner.flush?.()
     await this.client.flushAsync()
   }
 }

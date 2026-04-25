@@ -1,12 +1,12 @@
 import { appendFile, mkdir } from "node:fs/promises"
 import { dirname } from "node:path"
 import type {
+  ChatOptions,
   ChatMessage,
   ChatResponse,
   LLMProvider,
   ModelProvider,
   ToolCall,
-  ToolDefinition,
 } from "./provider.ts"
 
 export interface LoggingLLMProviderOptions {
@@ -64,7 +64,7 @@ export class LoggingLLMProvider implements LLMProvider {
 
   async chat(
     messages: ChatMessage[],
-    options?: { maxTokens?: number; tools?: ToolDefinition[] },
+    options?: ChatOptions,
   ): Promise<ChatResponse> {
     const requestId = crypto.randomUUID()
     const startedAt = new Date().toISOString()
@@ -99,5 +99,9 @@ export class LoggingLLMProvider implements LLMProvider {
       })
       throw error
     }
+  }
+
+  async flush(): Promise<void> {
+    await this.inner.flush?.()
   }
 }

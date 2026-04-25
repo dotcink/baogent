@@ -1,10 +1,10 @@
-import { joinTextParts, splitSystemMessages } from "./message-utils.ts"
+import { joinTextParts, parseJSONObject, splitSystemMessages } from "./utils/index.ts"
 import type {
   ChatMessage,
+  ChatOptions,
   ChatResponse,
   LLMProvider,
   ToolCall,
-  ToolDefinition,
 } from "./provider.ts"
 
 export interface GeminiConfig {
@@ -93,20 +93,12 @@ function toGeminiContents(messages: ChatMessage[]): {
     }
 
     for (const toolCall of message.tool_calls ?? []) {
-      let args: Record<string, unknown>
-
-      try {
-        args = JSON.parse(toolCall.function.arguments) as Record<string, unknown>
-      } catch {
-        args = {}
-      }
-
       toolNames.set(toolCall.id, toolCall.function.name)
       parts.push({
         functionCall: {
           id: toolCall.id,
           name: toolCall.function.name,
-          args,
+          args: parseJSONObject(toolCall.function.arguments),
         },
         ...(toolCall.thoughtSignature
           ? {
@@ -175,7 +167,7 @@ export class GeminiClient implements LLMProvider {
 
   async chat(
     messages: ChatMessage[],
-    options?: { maxTokens?: number; tools?: ToolDefinition[] },
+    options?: ChatOptions,
   ): Promise<ChatResponse> {
     const payload = toGeminiContents(messages)
     const endpoint = `${this.baseURL}/models/${this.config.model}:generateContent`

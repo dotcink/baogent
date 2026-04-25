@@ -39,11 +39,14 @@ export interface ChatResponse {
   toolCalls: ToolCall[]
 }
 
+export interface ChatOptions {
+  maxTokens?: number
+  tools?: ToolDefinition[]
+}
+
 export interface LLMProvider {
-  chat(
-    messages: ChatMessage[],
-    options?: { maxTokens?: number; tools?: ToolDefinition[] },
-  ): Promise<ChatResponse>
+  chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse>
+  flush?(): Promise<void>
 }
 
 export type ModelProvider = "openai" | "anthropic" | "gemini"

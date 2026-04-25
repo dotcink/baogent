@@ -1,10 +1,10 @@
-import { joinTextParts, splitSystemMessages } from "./message-utils.ts"
+import { joinTextParts, parseJSONObject, splitSystemMessages } from "./utils/index.ts"
 import type {
   ChatMessage,
+  ChatOptions,
   ChatResponse,
   LLMProvider,
   ToolCall,
-  ToolDefinition,
 } from "./provider.ts"
 
 export interface AnthropicConfig {
@@ -86,19 +86,11 @@ function toAnthropicMessages(messages: ChatMessage[]): {
     }
 
     for (const toolCall of message.tool_calls ?? []) {
-      let input: Record<string, unknown>
-
-      try {
-        input = JSON.parse(toolCall.function.arguments) as Record<string, unknown>
-      } catch {
-        input = {}
-      }
-
       content.push({
         type: "tool_use",
         id: toolCall.id,
         name: toolCall.function.name,
-        input,
+        input: parseJSONObject(toolCall.function.arguments),
       })
     }
 
@@ -157,7 +149,7 @@ export class AnthropicClient implements LLMProvider {
 
   async chat(
     messages: ChatMessage[],
-    options?: { maxTokens?: number; tools?: ToolDefinition[] },
+    options?: ChatOptions,
   ): Promise<ChatResponse> {
     const payload = toAnthropicMessages(messages)
     const res = await fetch(`${this.baseURL}/messages`, {
