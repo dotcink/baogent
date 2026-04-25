@@ -14,16 +14,23 @@ export interface Config {
   model: ModelConfig
 }
 
-export const CONFIG_FILENAMES = ["config/.local.toml"] as const
-
-async function parseTOML(path: string): Promise<Partial<Config>> {
-  const text = await Bun.file(path).text()
-  return Bun.TOML.parse(text) as Partial<Config>
+export interface LangfuseConfig {
+  secretKey: string
+  publicKey: string
+  baseUrl?: string
 }
 
-async function readConfigFile(path: string): Promise<Partial<Config>> {
+export const CONFIG_FILENAMES = ["config/.local.toml"] as const
+export const LANGFUSE_CONFIG_FILENAME = "config/langfuse.toml" as const
+
+async function parseTOML<T>(path: string): Promise<Partial<T>> {
+  const text = await Bun.file(path).text()
+  return Bun.TOML.parse(text) as Partial<T>
+}
+
+async function readParsedTOML<T>(path: string): Promise<Partial<T>> {
   try {
-    return await parseTOML(path)
+    return await parseTOML<T>(path)
   } catch {
     console.error(`Error: failed to parse config file: ${path}`)
     process.exit(1)
@@ -37,7 +44,7 @@ export async function loadConfigFile(path: string): Promise<Partial<Config>> {
     process.exit(1)
   }
 
-  return await readConfigFile(path)
+  return await readParsedTOML<Config>(path)
 }
 
 /** 在当前目录按默认文件名查找配置，找不到返回 {} */
@@ -45,10 +52,16 @@ export async function findDefaultConfig(): Promise<Partial<Config>> {
   for (const name of CONFIG_FILENAMES) {
     const file = Bun.file(name)
     if (await file.exists()) {
-      return await readConfigFile(name)
+      return await readParsedTOML<Config>(name)
     }
   }
   return {}
+}
+
+async function readOptionalTOML<T>(path: string): Promise<Partial<T>> {
+  const file = Bun.file(path)
+  if (!(await file.exists())) return {}
+  return await readParsedTOML<T>(path)
 }
 
 /**
@@ -104,5 +117,17 @@ export function resolveModelConfig(file: Partial<Config>): ModelConfig {
   return {
     provider: "openai",
     ...baseConfig,
+  }
+}
+
+/** 从 config/langfuse.toml 加载 Langfuse 配置，缺少必填字段时返回 null。 */
+export async function loadLangfuseConfig(): Promise<LangfuseConfig | null> {
+  const file = await readOptionalTOML<LangfuseConfig>(LANGFUSE_CONFIG_FILENAME)
+  const { secretKey, publicKey, baseUrl } = file
+  if (!secretKey || !publicKey) return null
+  return {
+    secretKey,
+    publicKey,
+    ...(baseUrl ? { baseUrl } : {}),
   }
 }

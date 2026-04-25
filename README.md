@@ -92,7 +92,6 @@ bun run cli [--config <path>] [--model-log <path>] <command> [args]
 - `MODEL_BASE_URL`：模型 API 端点
 - `MODEL_NAME`：模型名称
 - `MODEL_MAX_TOKENS`：最大输出 token 数
-
 日志示例：
 
 ```bash
@@ -106,6 +105,7 @@ bun run cli --model-log ./logs/model-io.jsonl chat "你好"
 - `gemini`：Google Gemini `generateContent` API，支持 function calling
 
 示例配置见 [config/example.toml](/Users/dotcink/GitHub/baogent/config/example.toml)。
+Langfuse 文件配置示例见 [config/langfuse.example.toml](/Users/dotcink/GitHub/baogent/config/langfuse.example.toml)。
 
 ## 开发
 

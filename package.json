@@ -11,6 +11,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.89.0"
+    "@anthropic-ai/sdk": "^0.89.0",
+    "langfuse": "^3.38.20"
   }
 }

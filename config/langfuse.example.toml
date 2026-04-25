@@ -1,0 +1,7 @@
+# Langfuse 配置示例
+# 复制此文件并填入实际值：
+#   cp config/langfuse.example.toml config/langfuse.toml
+
+secretKey = "sk-lf-..."
+publicKey = "pk-lf-..."
+# baseUrl = "https://cloud.langfuse.com"  # 自托管时填写，默认为 EU cloud

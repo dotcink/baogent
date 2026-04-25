@@ -12,11 +12,11 @@
  * 配置优先级：env vars > --config 文件 > 默认文件（config/.local.toml）
  *
  * 环境变量：
- *   MODEL_PROVIDER    协议提供方（openai | anthropic | gemini）
- *   MODEL_API_KEY     API Key
- *   MODEL_BASE_URL    API 端点
- *   MODEL_NAME        模型名称
- *   MODEL_MAX_TOKENS  最大输出 token
+ *   MODEL_PROVIDER        协议提供方（openai | anthropic | gemini）
+ *   MODEL_API_KEY         API Key
+ *   MODEL_BASE_URL        API 端点
+ *   MODEL_NAME            模型名称
+ *   MODEL_MAX_TOKENS      最大输出 token
  */
 
 import { createInterface } from "node:readline/promises"
@@ -32,12 +32,14 @@ import {
   GeminiClient,
   OpenAIClient,
   LoggingLLMProvider,
+  LangfuseLLMProvider,
   type LLMProvider,
 } from "../model/index.ts"
 import {
   CONFIG_FILENAMES,
   loadConfigFile,
   findDefaultConfig,
+  loadLangfuseConfig,
   resolveModelConfig,
 } from "./config.ts"
 
@@ -115,35 +117,49 @@ if (!command) usage()
 
 // ── 命令处理 ──────────────────────────────────────────────────────────────────
 
-async function createClient(): Promise<LLMProvider> {
+async function createClient(opts?: { sessionId?: string; traceName?: string }) {
   const fileConfig = configPath
     ? await loadConfigFile(configPath)
     : await findDefaultConfig()
 
   const modelConfig = resolveModelConfig(fileConfig)
-  let client: LLMProvider
 
-  if (modelConfig.provider === "anthropic") {
-    client = new AnthropicClient(modelConfig)
-  } else if (modelConfig.provider === "gemini") {
-    client = new GeminiClient(modelConfig)
-  } else {
-    client = new OpenAIClient(modelConfig)
-  }
+  let client: LLMProvider =
+    modelConfig.provider === "anthropic"
+      ? new AnthropicClient(modelConfig)
+      : modelConfig.provider === "gemini"
+        ? new GeminiClient(modelConfig)
+        : new OpenAIClient(modelConfig)
 
   if (modelIOLogPath) {
-    return new LoggingLLMProvider(client, {
+    client = new LoggingLLMProvider(client, {
       path: modelIOLogPath,
       provider: modelConfig.provider,
       model: modelConfig.model,
     })
   }
 
+  const langfuseConfig = await loadLangfuseConfig()
+  if (langfuseConfig) {
+    client = new LangfuseLLMProvider(client, {
+      model: modelConfig.model,
+      ...langfuseConfig,
+      ...(opts?.traceName ? { traceName: opts.traceName } : {}),
+      ...(opts?.sessionId ? { sessionId: opts.sessionId } : {}),
+    })
+  }
+
   return client
 }
 
+async function flushClient(client: LLMProvider): Promise<void> {
+  if (client instanceof LangfuseLLMProvider) {
+    await client.flush()
+  }
+}
+
 if (command === "chat") {
-  const client = await createClient()
+  const client = await createClient({ traceName: "chat" })
   let message = rest.join(" ").trim()
 
   if (!message) {
@@ -158,8 +174,10 @@ if (command === "chat") {
 
   const reply = await client.chat([{ role: "user", content: message }])
   console.log(reply.content)
+  await flushClient(client)
 } else if (command === "agent-loop") {
-  const client = await createClient()
+  const sessionId = crypto.randomUUID()
+  const client = await createClient({ traceName: "agent-loop", sessionId })
   const todoManager = new TodoManager()
   const loop = new AgentLoop(client, {
     systemPrompt: [
@@ -197,6 +215,7 @@ if (command === "chat") {
   }
 
   rl.close()
+  await flushClient(client)
 } else {
   console.error(`Unknown command: ${command}`)
   usage()
