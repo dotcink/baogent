@@ -1,12 +1,12 @@
 import type { ChatMessage, LLMProvider } from "../model/provider.ts"
-import { TodoManager, isTodoToolCall } from "./tools/todo.ts"
+import { TodoManager, isTodoToolCall } from "../tool/builtin/todo.ts"
 import {
   buildToolResultMessages,
   executeToolCalls,
   normalizeMessages,
   parseToolCalls,
-} from "./tools/tool.ts"
-import type { ParsedToolCall, ToolDefinition } from "./tools/tool.ts"
+} from "../tool/tool.ts"
+import type { ParsedToolCall, ToolDefinition } from "../tool/tool.ts"
 
 export interface AgentLoopOptions {
   systemPrompt?: string

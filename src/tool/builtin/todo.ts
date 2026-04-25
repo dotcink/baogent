@@ -1,4 +1,4 @@
-import type { ParsedToolCall, ToolDefinition } from "./tool.ts"
+import type { ParsedToolCall, ToolDefinition } from "../tool.ts"
 
 const MAX_PLAN_ITEMS = 12
 const PLAN_REMINDER_INTERVAL = 3

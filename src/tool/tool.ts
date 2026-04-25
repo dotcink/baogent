@@ -1,6 +1,6 @@
-import type { ChatMessage, ToolCall, ToolDefinition } from "../../model/provider.ts"
+import type { ChatMessage, ToolCall, ToolDefinition } from "../model/provider.ts"
 
-export type { ToolCall, ToolDefinition } from "../../model/provider.ts"
+export type { ToolCall, ToolDefinition } from "../model/provider.ts"
 
 export interface ParsedToolCall {
   id: string

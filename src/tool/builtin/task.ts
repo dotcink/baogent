@@ -1,7 +1,7 @@
-import { AgentLoop } from "../loop.ts"
+import { AgentLoop } from "../../agent/loop.ts"
 import type { LLMProvider } from "../../model/provider.ts"
 import { TodoManager } from "./todo.ts"
-import type { ParsedToolCall, ToolDefinition } from "./tool.ts"
+import type { ParsedToolCall, ToolDefinition } from "../tool.ts"
 
 export interface TaskToolInput {
   prompt: string

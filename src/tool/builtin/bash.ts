@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process"
-import type { ParsedToolCall, ToolDefinition } from "./tool.ts"
+import type { ParsedToolCall, ToolDefinition } from "../tool.ts"
 
 const BLOCKED_PATTERNS = ["rm -rf /", "sudo", "shutdown", "reboot", "> /dev/"]
 

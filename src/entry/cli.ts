@@ -27,7 +27,7 @@ import {
   getToolsByNames,
   parentToolNames,
   TodoManager,
-} from "../agent/tools/index.ts"
+} from "../tool/builtin/index.ts"
 import { createLLMProvider, LoggingLLMProvider, LangfuseLLMProvider } from "../model/index.ts"
 import {
   CONFIG_FILENAMES,

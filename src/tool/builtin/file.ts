@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, relative, resolve } from "node:path"
-import type { ParsedToolCall, ToolDefinition } from "./tool.ts"
+import type { ParsedToolCall, ToolDefinition } from "../tool.ts"
 
 const MAX_OUTPUT_CHARS = 50_000
 

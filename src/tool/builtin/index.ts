@@ -10,7 +10,7 @@ import {
 } from "./file.ts"
 import { createTaskToolHandler, taskTool } from "./task.ts"
 import { TodoManager, isTodoToolCall, todoTool } from "./todo.ts"
-import type { ParsedToolCall, ToolDefinition } from "./tool.ts"
+import type { ParsedToolCall, ToolDefinition } from "../tool.ts"
 
 export { bashTool, executeBashTool } from "./bash.ts"
 export {
@@ -29,8 +29,8 @@ export {
   executeToolCalls,
   normalizeMessages,
   parseToolCalls,
-} from "./tool.ts"
-export type { ParsedToolCall, ToolCall, ToolDefinition, ToolResult } from "./tool.ts"
+} from "../tool.ts"
+export type { ParsedToolCall, ToolCall, ToolDefinition, ToolResult } from "../tool.ts"
 
 export type ToolHandler = (toolCall: ParsedToolCall) => Promise<string> | string
 
