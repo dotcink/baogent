@@ -1,11 +1,11 @@
-import { joinTextParts, parseJSONObject, splitSystemMessages } from "./utils/index.ts"
+import { joinTextParts, parseJSONObject, splitSystemMessages } from "../utils/index.ts"
 import type {
   ChatMessage,
   ChatOptions,
   ChatResponse,
   LLMProvider,
   ToolCall,
-} from "./provider.ts"
+} from "../provider.ts"
 
 export interface GeminiConfig {
   apiKey: string

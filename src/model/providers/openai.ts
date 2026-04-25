@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatOptions, ChatResponse, LLMProvider } from "./provider.ts"
+import type { ChatMessage, ChatOptions, ChatResponse, LLMProvider } from "../provider.ts"
 
 export interface OpenAIConfig {
   apiKey: string

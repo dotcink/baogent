@@ -9,14 +9,14 @@ export type {
 } from "./provider.ts"
 
 // OpenAI Chat Completions 格式（兼容火山引擎、Together、Ollama 等）
-export { OpenAIClient } from "./openai.ts"
-export type { OpenAIConfig } from "./openai.ts"
+export { OpenAIClient } from "./providers/openai.ts"
+export type { OpenAIConfig } from "./providers/openai.ts"
 
 // 其他主流协议
-export { AnthropicClient } from "./anthropic.ts"
-export type { AnthropicConfig } from "./anthropic.ts"
-export { GeminiClient } from "./gemini.ts"
-export type { GeminiConfig } from "./gemini.ts"
+export { AnthropicClient } from "./providers/anthropic.ts"
+export type { AnthropicConfig } from "./providers/anthropic.ts"
+export { GeminiClient } from "./providers/gemini.ts"
+export type { GeminiConfig } from "./providers/gemini.ts"
 export { LoggingLLMProvider } from "./logging.ts"
 export type { LoggingLLMProviderOptions } from "./logging.ts"
 export { LangfuseLLMProvider } from "./langfuse.ts"
@@ -24,9 +24,9 @@ export type { LangfuseLLMProviderOptions } from "./langfuse.ts"
 export { parseJSONObject, joinTextParts, splitSystemMessages } from "./utils/index.ts"
 export type { SplitMessagesResult } from "./utils/index.ts"
 
-import { AnthropicClient, type AnthropicConfig } from "./anthropic.ts"
-import { GeminiClient, type GeminiConfig } from "./gemini.ts"
-import { OpenAIClient, type OpenAIConfig } from "./openai.ts"
+import { AnthropicClient, type AnthropicConfig } from "./providers/anthropic.ts"
+import { GeminiClient, type GeminiConfig } from "./providers/gemini.ts"
+import { OpenAIClient, type OpenAIConfig } from "./providers/openai.ts"
 import type { LLMProvider } from "./provider.ts"
 
 export type ProviderClientConfig =
