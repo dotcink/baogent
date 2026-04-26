@@ -11,6 +11,7 @@ import {
 import { createTaskToolHandler, taskTool } from "./task.ts"
 import { TodoManager, isTodoToolCall, todoTool } from "./todo.ts"
 import { SkillRegistry, loadSkillTool, createExecuteLoadSkillTool } from "./skill.ts"
+import { compactTool, createExecuteCompactTool } from "./compact.ts"
 import type { ParsedToolCall, ToolDefinition } from "../tool.ts"
 
 export { bashTool, executeBashTool } from "./bash.ts"
@@ -27,6 +28,7 @@ export type { TaskToolHandlerOptions, TaskToolInput } from "./task.ts"
 export { TodoManager, isTodoToolCall, todoTool } from "./todo.ts"
 export { SkillRegistry, loadSkillTool, createExecuteLoadSkillTool } from "./skill.ts"
 export type { SkillDocument, SkillManifest } from "./skill.ts"
+export { compactTool, createExecuteCompactTool } from "./compact.ts"
 export {
   buildToolResultMessages,
   executeToolCalls,
@@ -80,6 +82,10 @@ export const TOOL_REGISTRY: Record<string, RegisteredTool> = {
     createHandler: (options) =>
       options.skillRegistry ? createExecuteLoadSkillTool(options.skillRegistry) : null,
   },
+  [compactTool.name]: {
+    definition: compactTool,
+    createHandler: () => createExecuteCompactTool(),
+  },
   [taskTool.name]: {
     definition: taskTool,
     createHandler: (options) =>
@@ -108,7 +114,7 @@ export const builtInToolNames = [
   loadSkillTool.name,
 ] as const
 
-export const parentToolNames = [...builtInToolNames, taskTool.name] as const
+export const parentToolNames = [...builtInToolNames, taskTool.name, compactTool.name] as const
 
 export function getToolsByNames(toolNames: readonly string[]): ToolDefinition[] {
   return toolNames.flatMap((name) => {

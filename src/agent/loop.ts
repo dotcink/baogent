@@ -7,6 +7,11 @@ import {
   parseToolCalls,
 } from "../tool/tool.ts"
 import type { ParsedToolCall, ToolDefinition } from "../tool/tool.ts"
+import {
+  autoCompactIfNeeded,
+  handleManualCompaction,
+  persistToolResults,
+} from "./compact.ts"
 
 export interface AgentLoopOptions {
   systemPrompt?: string
@@ -16,6 +21,7 @@ export interface AgentLoopOptions {
   todoManager?: TodoManager
   executeToolCall: (toolCall: ParsedToolCall) => Promise<string> | string
   messages?: ChatMessage[]
+  workspaceDir?: string
 }
 
 export interface AgentLoopState {
@@ -56,7 +62,7 @@ function logToolResult(result: { content: string }): void {
 export class AgentLoop {
   private readonly model: LLMProvider
   private readonly options: AgentLoopOptions
-  private readonly messages: ChatMessage[]
+  private messages: ChatMessage[]
   private turnCount = 1
   private transitionReason: string | null = null
 
@@ -82,6 +88,9 @@ export class AgentLoop {
   }
 
   async runOneTurn(): Promise<string | null> {
+    const workspaceDir = this.options.workspaceDir || process.cwd()
+    this.messages = await autoCompactIfNeeded(this.messages, workspaceDir, this.model)
+
     const systemMessages = this.options.systemPrompt
       ? ([{ role: "system", content: this.options.systemPrompt }] satisfies ChatMessage[])
       : []
@@ -121,6 +130,9 @@ export class AgentLoop {
         logToolResult(result)
       },
     })
+
+    await persistToolResults(results, workspaceDir)
+
     if (this.options.todoManager) {
       if (toolCalls.some(isTodoToolCall)) {
         this.options.todoManager.resetRoundCounter()
@@ -129,6 +141,9 @@ export class AgentLoop {
       }
     }
     this.messages.push(...buildToolResultMessages(results))
+
+    this.messages = await handleManualCompaction(this.messages, toolCalls, workspaceDir, this.model)
+
     this.turnCount += 1
     this.transitionReason = "tool_result"
     return null

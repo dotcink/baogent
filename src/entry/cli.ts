@@ -145,6 +145,7 @@ async function createClient(opts?: { sessionId?: string; traceName?: string }) {
 function createParentSystemPrompt(workspace: string, skillRegistry: SkillRegistry): string {
   return [
     `You are a coding agent at ${workspace}.`,
+    "Prefer read_file, write_file or edit_file tools over `bash`.",
     "Use the todo tool for multi-step work.",
     "Use the task tool to delegate exploration or bounded subtasks when helpful.",
     "Use load_skill when a task needs specialized instructions before you act.",
@@ -189,6 +190,7 @@ if (command === "chat") {
   const loop = new AgentLoop(client, {
     systemPrompt: createParentSystemPrompt(process.cwd(), skillRegistry),
     generationName: "lead-agent",
+    workspaceDir: process.cwd(),
     tools: getToolsByNames(parentToolNames),
     todoManager,
     executeToolCall: createToolExecutor(parentToolNames, {
