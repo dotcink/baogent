@@ -12,6 +12,7 @@ import {
   handleManualCompaction,
   persistToolResults,
 } from "./compact.ts"
+import { type PermissionManager, createPermissionAwareExecutor } from "./permission.ts"
 
 export interface AgentLoopOptions {
   systemPrompt?: string
@@ -22,6 +23,8 @@ export interface AgentLoopOptions {
   executeToolCall: (toolCall: ParsedToolCall) => Promise<string> | string
   messages?: ChatMessage[]
   workspaceDir?: string
+  permissionManager?: PermissionManager
+  askUser?: (toolName: string, toolInput: Record<string, unknown>) => Promise<boolean | "always">
 }
 
 export interface AgentLoopState {
@@ -124,7 +127,14 @@ export class AgentLoop {
     }
 
     const toolCalls = parseToolCalls(response.toolCalls)
-    const results = await executeToolCalls(toolCalls, this.options.executeToolCall, {
+
+    const permissionAwareExecuteToolCall = createPermissionAwareExecutor({
+      executeToolCall: this.options.executeToolCall,
+      permissionManager: this.options.permissionManager,
+      askUser: this.options.askUser,
+    })
+
+    const results = await executeToolCalls(toolCalls, permissionAwareExecuteToolCall, {
       onToolCall: logToolCall,
       onToolResult: (_toolCall, result) => {
         logToolResult(result)

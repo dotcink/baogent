@@ -21,7 +21,7 @@
 
 import { createInterface } from "node:readline/promises"
 import { stdin as input, stdout as output } from "node:process"
-import { AgentLoop } from "../agent/index.ts"
+import { AgentLoop, PermissionManager, MODES, type PermissionMode } from "../agent/index.ts"
 import {
   createToolExecutor,
   getToolsByNames,
@@ -187,12 +187,31 @@ if (command === "chat") {
   const client = await createClient({ traceName: "agent-loop", sessionId })
   const todoManager = new TodoManager()
   const skillRegistry = new SkillRegistry(".agents/skills")
+
+  const rl = createInterface({ input, output })
+
+  console.log("Permission modes:", MODES.join(", "))
+  const modeInput = await rl.question("Mode (default): ")
+  const initialMode = (modeInput.trim().toLowerCase() || "default") as PermissionMode
+  const permissionManager = new PermissionManager(MODES.includes(initialMode) ? initialMode : "default")
+  console.log(`[Permission mode: ${permissionManager.mode}]`)
+
   const loop = new AgentLoop(client, {
     systemPrompt: createParentSystemPrompt(process.cwd(), skillRegistry),
     generationName: "lead-agent",
     workspaceDir: process.cwd(),
     tools: getToolsByNames(parentToolNames),
     todoManager,
+    permissionManager,
+    askUser: async (toolName: string, toolInput: Record<string, unknown>) => {
+      const preview = JSON.stringify(toolInput).slice(0, 200)
+      console.log(`\n  \x1b[33m[Permission]\x1b[0m ${toolName}: ${preview}`)
+      const answer = await rl.question("  Allow? (y/n/always): ")
+      const normalized = answer.trim().toLowerCase()
+      if (normalized === "always") return "always"
+      if (normalized === "y" || normalized === "yes") return true
+      return false
+    },
     executeToolCall: createToolExecutor(parentToolNames, {
       todoManager,
       skillRegistry,
@@ -204,8 +223,6 @@ if (command === "chat") {
     }),
   })
 
-  const rl = createInterface({ input, output })
-
   while (true) {
     let message = ""
 
@@ -215,8 +232,27 @@ if (command === "chat") {
       break
     }
 
-    if (!message.trim() || ["q", "exit"].includes(message.trim().toLowerCase())) {
+    const trimmed = message.trim()
+    if (!trimmed || ["q", "exit"].includes(trimmed.toLowerCase())) {
       break
+    }
+
+    if (trimmed.startsWith("/mode")) {
+      const parts = trimmed.split(/\s+/)
+      if (parts.length === 2 && MODES.includes(parts[1] as PermissionMode)) {
+        permissionManager.mode = parts[1] as PermissionMode
+        console.log(`[Switched to ${parts[1]} mode]`)
+      } else {
+        console.log(`Usage: /mode <${MODES.join("|")}>`)
+      }
+      continue
+    }
+
+    if (trimmed === "/rules") {
+      permissionManager.rules.forEach((rule, i) => {
+        console.log(`  ${i}: ${JSON.stringify(rule)}`)
+      })
+      continue
     }
 
     loop.addUserMessage(message)
