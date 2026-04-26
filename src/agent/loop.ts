@@ -13,6 +13,7 @@ import {
   persistToolResults,
 } from "./compact.ts"
 import { type PermissionManager, createPermissionAwareExecutor } from "./permission.ts"
+import { type HookManager, createHookAwareExecutor } from "./hooks.ts"
 
 export interface AgentLoopOptions {
   systemPrompt?: string
@@ -24,6 +25,7 @@ export interface AgentLoopOptions {
   messages?: ChatMessage[]
   workspaceDir?: string
   permissionManager?: PermissionManager
+  hookManager?: HookManager
   askUser?: (toolName: string, toolInput: Record<string, unknown>) => Promise<boolean | "always">
 }
 
@@ -134,7 +136,12 @@ export class AgentLoop {
       askUser: this.options.askUser,
     })
 
-    const results = await executeToolCalls(toolCalls, permissionAwareExecuteToolCall, {
+    const hookAwareExecuteToolCall = createHookAwareExecutor({
+      executeToolCall: permissionAwareExecuteToolCall,
+      hookManager: this.options.hookManager,
+    })
+
+    const results = await executeToolCalls(toolCalls, hookAwareExecuteToolCall, {
       onToolCall: logToolCall,
       onToolResult: (_toolCall, result) => {
         logToolResult(result)

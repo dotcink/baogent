@@ -21,7 +21,7 @@
 
 import { createInterface } from "node:readline/promises"
 import { stdin as input, stdout as output } from "node:process"
-import { AgentLoop, PermissionManager, MODES, type PermissionMode } from "../agent/index.ts"
+import { AgentLoop, PermissionManager, MODES, type PermissionMode, HookManager } from "../agent/index.ts"
 import {
   createToolExecutor,
   getToolsByNames,
@@ -196,6 +196,9 @@ if (command === "chat") {
   const permissionManager = new PermissionManager(MODES.includes(initialMode) ? initialMode : "default")
   console.log(`[Permission mode: ${permissionManager.mode}]`)
 
+  const hookManager = new HookManager(process.cwd())
+  hookManager.runHooks("SessionStart", { tool_name: "", tool_input: {} })
+
   const loop = new AgentLoop(client, {
     systemPrompt: createParentSystemPrompt(process.cwd(), skillRegistry),
     generationName: "lead-agent",
@@ -203,6 +206,7 @@ if (command === "chat") {
     tools: getToolsByNames(parentToolNames),
     todoManager,
     permissionManager,
+    hookManager,
     askUser: async (toolName: string, toolInput: Record<string, unknown>) => {
       const preview = JSON.stringify(toolInput).slice(0, 200)
       console.log(`\n  \x1b[33m[Permission]\x1b[0m ${toolName}: ${preview}`)
